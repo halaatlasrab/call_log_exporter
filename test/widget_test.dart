@@ -7,7 +7,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
 
 import 'package:call_log_exporter/main.dart';
 import 'package:call_log_exporter/providers/call_log_provider.dart';

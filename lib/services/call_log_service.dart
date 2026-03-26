@@ -1,14 +1,18 @@
 import 'dart:async';
-import 'package:call_log/call_log.dart' as call_log_data;
+import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../models/call_log_entry.dart';
 
 class CallLogService {
+  static const MethodChannel _channel = MethodChannel('call_log_exporter/call_logs');
+
   static Future<bool> requestPermissions() async {
-    final callLogPermission = await Permission.phone.request();
-    final contactsPermission = await Permission.contacts.request();
-    
-    return callLogPermission.isGranted && contactsPermission.isGranted;
+    try {
+      final bool granted = await _channel.invokeMethod('requestPermissions');
+      return granted;
+    } catch (e) {
+      return false;
+    }
   }
 
   static Future<List<CallLogEntry>> getCallLogs({DateTime? startDate}) async {
@@ -18,58 +22,19 @@ class CallLogService {
         throw Exception('Call log and contacts permissions are required');
       }
 
-      // Get real call logs from device
-      final Iterable<call_log_data.CallLogEntry> entries = await call_log_data.CallLog.get();
-      List<CallLogEntry> callLogs = [];
+      final List<dynamic> result = await _channel.invokeMethod('getCallLogs', {
+        'startDate': startDate?.millisecondsSinceEpoch,
+      });
 
-      for (final log in entries) {
-        final entry = CallLogEntry(
-          phoneNumber: log.number ?? '',
-          contactName: log.name,
-          callType: _getCallTypeString(log.callType ?? call_log_data.CallType.unknown),
-          timestamp: DateTime.tryParse(log.timestamp.toString()) ?? DateTime.now(),
-          duration: log.duration ?? 0,
-        );
-        callLogs.add(entry);
-      }
-
-      // Filter by date if needed
-      if (startDate != null) {
-        callLogs = callLogs.where((log) => log.timestamp.isAfter(startDate)).toList();
-      }
-
-      // Remove duplicates (keep latest entry per phone number)
-      final Map<String, CallLogEntry> uniqueLogs = {};
-      for (final log in callLogs) {
-        final normalizedPhone = CallLogEntry.normalizePhoneNumber(log.phoneNumber);
-        if (!uniqueLogs.containsKey(normalizedPhone) || 
-            log.timestamp.isAfter(uniqueLogs[normalizedPhone]!.timestamp)) {
-          uniqueLogs[normalizedPhone] = log;
-        }
-      }
-
-      return uniqueLogs.values.toList();
+      return result.map((item) => CallLogEntry(
+        phoneNumber: item['phoneNumber'] ?? '',
+        contactName: item['contactName'],
+        callType: item['callType'] ?? 'unknown',
+        timestamp: DateTime.fromMillisecondsSinceEpoch(item['timestamp'] ?? 0),
+        duration: item['duration'] ?? 0,
+      )).toList();
     } catch (e) {
       throw Exception('Failed to get call logs: $e');
-    }
-  }
-
-  static String _getCallTypeString(call_log_data.CallType callType) {
-    switch (callType) {
-      case call_log_data.CallType.incoming:
-        return 'incoming';
-      case call_log_data.CallType.outgoing:
-        return 'outgoing';
-      case call_log_data.CallType.missed:
-        return 'missed';
-      case call_log_data.CallType.rejected:
-        return 'rejected';
-      case call_log_data.CallType.blocked:
-        return 'blocked';
-      case call_log_data.CallType.unknown:
-        return 'unknown';
-      default:
-        return 'unknown';
     }
   }
 
