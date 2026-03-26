@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../models/call_log_entry.dart';
-import '../services/call_log_service.dart';
+import '../services/call_log_service_simple.dart';
 import '../services/csv_export_service.dart';
 
 class CallLogProvider extends ChangeNotifier {

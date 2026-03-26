@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/call_log_provider.dart';
+import 'services/call_log_service_simple.dart';
 
 void main() {
   runApp(const MyApp());
