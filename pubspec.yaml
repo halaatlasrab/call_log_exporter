@@ -48,9 +48,6 @@ dependencies:
   path_provider: ^2.1.4
   share_plus: ^10.1.2
   
-  # Contacts for name resolution
-  contacts_service: ^0.6.3
-  
   # State management
   provider: ^6.1.2
 
