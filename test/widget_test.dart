@@ -15,7 +15,14 @@ import 'package:call_log_exporter/providers/call_log_provider.dart';
 void main() {
   testWidgets('Call Log Exporter smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => CallLogProvider()),
+        ],
+        child: const MyApp(),
+      ),
+    );
 
     // Verify that our app title is displayed.
     expect(find.text('Call Log Exporter'), findsOneWidget);
